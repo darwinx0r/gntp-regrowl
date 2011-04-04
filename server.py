@@ -43,6 +43,8 @@ class ServerParser(OptionParser):
 					dest='regrowl',action="store_true",default=self._config['server.regrowl'])
 		self.add_option("-e","--edit",help="Open config in $EDITOR",
 					dest='edit',action="store_true",default=False)
+                self.add_option("-s","--sticky",help="Make the notification sticky [%default]",
+                                        dest='sticky',action="store_true",default=False)
 		
 		# Debug Options
 		self.add_option("-d","--debug",help="Print raw growl packets",
@@ -85,6 +87,9 @@ class GNTPHandler(SocketServer.StreamRequestHandler):
 		
 		try:
 			message = gntp.parse_gntp(self.data,self.server.growl_password)
+                        if options.sticky:
+                        	message.add_header('Notification-Sticky','1')
+
 			message.send()
 			
 			response = gntp.GNTPOK(action=message.info['messagetype'])
@@ -113,6 +118,7 @@ if __name__ == "__main__":
 		import gntp
 	
 	server = GNTPServer((options.host, options.port), GNTPHandler)
+	server.sticky = options.sticky
 	server.growl_debug = options.debug
 	server.growl_password = options.password
 	
